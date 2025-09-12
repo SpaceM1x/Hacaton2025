@@ -14,6 +14,14 @@ export class HomeComponent implements OnInit {
   public readonly user = this.vkBridge.user;
   public readonly isInitialized = this.vkBridge.isInitialized;
 
+  // UI model
+  lecturesProgress = 45;
+  correctAnswers = 87;
+  selectedTab: 'for-you' | 'new' | 'fav' = 'for-you';
+  courses = [
+    { id: 1, title: 'Компьютерная грамотность' }
+  ];
+
   ngOnInit() {
     console.log('Главная страница загружена');
   }
