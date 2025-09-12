@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { VKBridgeService } from './services/vk-bridge.service';
 
 @Component({
   selector: 'app-root',
@@ -8,6 +9,12 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
-  title = 'u3a-vk-mini';
+export class AppComponent implements OnInit {
+  private vkBridge = inject(VKBridgeService);
+  title = 'Университет третьего возраста';
+
+  ngOnInit() {
+    // VK Bridge инициализируется автоматически в сервисе
+    console.log('VK Mini App запущено');
+  }
 }

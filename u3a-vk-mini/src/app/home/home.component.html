@@ -1,0 +1,80 @@
+<div class="home-container">
+  <!-- Заголовок с приветствием пользователя -->
+  <header class="header">
+    @if (user(); as currentUser) {
+      <div class="user-info">
+        @if (currentUser.photo_200) {
+          <img [src]="currentUser.photo_200" [alt]="currentUser.first_name" class="user-avatar">
+        } @else {
+          <div class="user-avatar-placeholder">
+            {{ currentUser.first_name.charAt(0) }}{{ currentUser.last_name.charAt(0) }}
+          </div>
+        }
+        <div class="user-details">
+          <h1 class="welcome-text">Добро пожаловать!</h1>
+          <p class="user-name">{{ currentUser.first_name }} {{ currentUser.last_name }}</p>
+        </div>
+      </div>
+    } @else {
+      <div class="loading-user">
+        <h1 class="welcome-text">Университет третьего возраста</h1>
+        <p class="loading-text">Загрузка...</p>
+      </div>
+    }
+  </header>
+
+  <!-- Основные кнопки навигации -->
+  <main class="main-content">
+    <div class="buttons-grid">
+      <button class="nav-button primary" (click)="onNavigateToCourses()">
+        <div class="button-icon">📚</div>
+        <div class="button-content">
+          <h3>Каталог курсов</h3>
+          <p>Изучайте новые темы</p>
+        </div>
+      </button>
+
+      <button class="nav-button secondary" (click)="onNavigateToProfile()">
+        <div class="button-icon">👤</div>
+        <div class="button-content">
+          <h3>Мой профиль</h3>
+          <p>Личные данные</p>
+        </div>
+      </button>
+
+      <button class="nav-button tertiary" (click)="onNavigateToProgress()">
+        <div class="button-icon">📊</div>
+        <div class="button-content">
+          <h3>Прогресс</h3>
+          <p>Достижения и результаты</p>
+        </div>
+      </button>
+
+      <button class="nav-button quaternary" (click)="onShareResult()">
+        <div class="button-icon">📤</div>
+        <div class="button-content">
+          <h3>Поделиться</h3>
+          <p>Результаты с друзьями</p>
+        </div>
+      </button>
+    </div>
+
+    <!-- Тестовые кнопки для проверки VK Bridge -->
+    <div class="test-section">
+      <h3>Тестирование VK Bridge</h3>
+      <div class="test-buttons">
+        <button class="test-button" (click)="onShowAlert()">
+          Показать алерт
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Статус инициализации -->
+  @if (!isInitialized()) {
+    <div class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p>Инициализация приложения...</p>
+    </div>
+  }
+</div>
