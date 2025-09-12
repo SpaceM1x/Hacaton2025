@@ -22,43 +22,78 @@ export class VKBridgeService {
     this.init();
   }
 
+  private withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+    let timeoutHandle: any;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutHandle = setTimeout(() => reject(new Error(`${label} timeout ${timeoutMs}ms`)), timeoutMs);
+    });
+    return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutHandle)) as Promise<T>;
+  }
+
   private async init() {
     try {
-      // Инициализируем VK Bridge
-      await (bridge as any).send('VKWebAppInit');
+      // Начальная тема до прихода события из VK
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      this.updateTheme({ scheme: prefersDark ? 'space_gray' : 'bright_light' });
+
+      // Инициализируем VK Bridge, если поддерживается
+      if ((bridge as any).supports?.('VKWebAppInit')) {
+        await this.withTimeout((bridge as any).send('VKWebAppInit'), 2000, 'VKWebAppInit');
+      }
       
-      // Получаем информацию о пользователе
-      const userInfo = await (bridge as any).send('VKWebAppGetUserInfo') as any;
-      this._user.set(userInfo as VKUser);
+      // Получаем информацию о пользователе, если доступно в окружении Mini Apps
+      let resolvedUser: VKUser | null = null;
+      if ((bridge as any).supports?.('VKWebAppGetUserInfo')) {
+        try {
+          const userInfo = await this.withTimeout((bridge as any).send('VKWebAppGetUserInfo'), 2500, 'VKWebAppGetUserInfo');
+          resolvedUser = userInfo as VKUser;
+        } catch (err) {
+          console.warn('VKWebAppGetUserInfo недоступен/таймаут, используем фолбэк');
+        }
+      }
+
+      if (resolvedUser) {
+        this._user.set(resolvedUser);
+      } else {
+        // Фолбэк для разработки в браузере вне VK контейнера
+        this._user.set({
+          id: 1,
+          first_name: 'Гость',
+          last_name: 'VK',
+          photo_200: ''
+        });
+      }
       
       // Подписываемся на события изменения темы
-      bridge.subscribe((e) => {
-        if (e.detail.type === 'VKWebAppUpdateConfig') {
+      (bridge as any).subscribe?.((e: any) => {
+        if (e?.detail?.type === 'VKWebAppUpdateConfig') {
           this.updateTheme(e.detail.data);
         }
       });
 
-      this._isInitialized.set(true);
-      console.log('VK Bridge инициализирован успешно', userInfo);
+      console.log('VK Bridge инициализация завершена');
     } catch (error) {
       console.error('Ошибка инициализации VK Bridge:', error);
-      // В режиме разработки можем симулировать пользователя
+      // Гарантируем наличие пользователя в dev
       this._user.set({
         id: 1,
-        first_name: 'Тестовый',
-        last_name: 'Пользователь',
+        first_name: 'Гость',
+        last_name: 'VK',
         photo_200: ''
       });
+    } finally {
+      // В любом случае снимаем лоадер
       this._isInitialized.set(true);
     }
   }
 
   private updateTheme(config: any) {
-    // Применяем тему VK к приложению
-    const theme = config.theme || 'light';
+    // VK передает scheme: bright_light | space_gray | ...
+    const scheme: string | undefined = config?.scheme || config?.theme;
+    const theme = scheme === 'space_gray' || scheme === 'vkcom_dark' || scheme === 'dark' ? 'dark' : 'light';
     document.body.setAttribute('data-theme', theme);
-    
-    // Применяем цветовую схему VK
+
+    // Цветовая схема
     if (theme === 'dark') {
       document.documentElement.style.setProperty('--vk-bg-color', '#19191a');
       document.documentElement.style.setProperty('--vk-text-color', '#ffffff');
