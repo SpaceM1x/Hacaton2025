@@ -34,6 +34,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Общая цветовая схема синей кнопки */
+.btn-blue, button.btn-blue {
+  background: #2a6df5;
+  color: #fff;
+  border: none;
+  border-radius: 100px; /* Более овальная форма */
+  padding: 12px 24px; /* Увеличим отступы для лучшей формы */
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease; /* Анимируем все свойства */
+  box-shadow: 0 4px 8px rgba(42, 109, 245, 0.3); /* Синяя тень с прозрачностью */
+}
+.btn-blue:hover, button.btn-blue:hover { background: #1b4fd1; }
+.btn-blue:active, button.btn-blue:active { background: #6da3ff; }
+
 /* Адаптивность */
 @media (max-width: 768px) {
   body {

@@ -13,7 +13,7 @@
           }
           <div class="user-name-wrap">
             <div class="user-fullname">{{ currentUser.first_name }} {{ currentUser.last_name }}</div>
-            <div class="user-username">&#64;username</div>
+            <div class="user-username">&#64;{{ getUserName() }}</div>
           </div>
         </div>
       } @else {
@@ -25,73 +25,94 @@
           </div>
         </div>
       }
-      <button class="icon-button" aria-label="Меню" (click)="onNavigateToProfile()">☰</button>
     </div>
 
-    <!-- Поиск -->
-    <div class="search-bar">
-      <span class="search-icon">🔎</span>
-      <input class="search-input" type="search" placeholder="название курса, тема..." />
-    </div>
   </header>
 
   <!-- Контент -->
   <main class="main-content">
-    <h2 class="section-title">Статистика</h2>
+    <h2 class="section-title">Статистика по последнему курсу</h2>
 
-    <section class="stats-card">
-      <div class="stats-title">Компьютерная грамотность</div>
+    <!-- Карточки курсов с возможностью листания -->
+    <div class="stats-cards-container">
+      <div class="stats-cards-wrapper">
+        <!-- Карточки курсов -->
+        @for (card of courseCards(); track card.courseId; let i = $index) {
+          <section class="stats-card" [class.active]="currentCardIndex === i" [class.hidden]="currentCardIndex !== i">
+            <div class="stats-title">{{ card.course?.title || 'Курс' }}</div>
 
-      <div class="progress-row">
-        <div class="progress-label">Пройдено лекций</div>
-        <div class="progress-value">{{ lecturesProgress }}%</div>
+            <div class="progress-row">
+              <div class="progress-label">Пройдено лекций</div>
+              <div class="progress-value">{{ card.progress }}%</div>
+            </div>
+            <div class="progress">
+              <div class="progress-track"></div>
+              <div class="progress-fill" [style.width.%]="card.progress"></div>
+            </div>
+
+            <div class="progress-row">
+              <div class="progress-label">Процент правильных ответов</div>
+              <div class="progress-value">{{ card.score }}%</div>
+            </div>
+            <div class="progress">
+              <div class="progress-track"></div>
+              <div class="progress-fill success" [style.width.%]="card.score"></div>
+            </div>
+
+            <button class="primary-button btn-blue" (click)="openCourse(card.course!)">Перейти к курсу</button>
+          </section>
+        }
+
+        <!-- Карточка "Подробнее" -->
+        <section class="stats-card more-card" [class.active]="currentCardIndex === courseCards().length" [class.hidden]="currentCardIndex !== courseCards().length">
+          <div class="more-card-content">
+            <div class="more-icon">📊</div>
+            <div class="more-title">Подробная статистика</div>
+            <div class="more-description">Посмотрите полную статистику по всем курсам и отслеживайте свой прогресс</div>
+            <button class="primary-button btn-blue" (click)="onNavigateToProgress()">Подробнее</button>
+          </div>
+        </section>
       </div>
-      <div class="progress">
-        <div class="progress-track"></div>
-        <div class="progress-fill" [style.width.%]="lecturesProgress"></div>
-      </div>
 
-      <div class="progress-row">
-        <div class="progress-label">Процент правильных ответов</div>
-        <div class="progress-value">{{ correctAnswers }}%</div>
-      </div>
-      <div class="progress">
-        <div class="progress-track"></div>
-        <div class="progress-fill success" [style.width.%]="correctAnswers"></div>
-      </div>
-
-      <button class="primary-button" (click)="onNavigateToProgress()">Подробнее</button>
-    </section>
-
-    <h2 class="section-title">Курсы</h2>
-
-    <div class="tabs">
-      <button class="tab" [class.active]="selectedTab==='for-you'" (click)="selectedTab='for-you'">Для Вас</button>
-      <button class="tab" [class.active]="selectedTab==='new'" (click)="selectedTab='new'">Новые курсы</button>
-      <button class="tab" [class.active]="selectedTab==='fav'" (click)="selectedTab='fav'">Избранные</button>
+      <!-- Навигация по карточкам -->
+      @if (getTotalCards() > 1) {
+        <div class="cards-navigation">
+          <button class="nav-button prev" (click)="prevCard()" [disabled]="currentCardIndex === 0">‹</button>
+          <div class="cards-indicators">
+            @for (i of [].constructor(getTotalCards()); track i; let index = $index) {
+              <div class="indicator" [class.active]="currentCardIndex === index"></div>
+            }
+          </div>
+          <button class="nav-button next" (click)="nextCard()" [disabled]="currentCardIndex >= getTotalCards() - 1">›</button>
+        </div>
+      }
     </div>
 
+    <h2 class="section-title">Продолжаем обучение</h2>
+
     <div class="courses-list">
-      @for (course of courses; track course.id) {
-        <article class="course-card">
+      @for (course of inProgressCourses(); track course.id) {
+        <article class="course-card" (click)="openCourse(course)">
           <div class="course-cover"></div>
           <div class="course-info">
             <div class="course-title">{{ course.title }}</div>
-            <div class="course-meta">1–2 часов в неделю</div>
+            <div class="course-meta">в процессе</div>
           </div>
-          <button class="icon-like" aria-label="В избранное">♡</button>
+          <div class="fav-mark" title="Избранное" [class.favorited]="isFav(course)">
+            <svg class="fav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </div>
         </article>
+      }
+      @empty {
+        <p class="muted">Пока нет начатых курсов. Выберите курс в разделе «Курсы».</p>
       }
     </div>
   </main>
 
   <!-- Нижняя навигация -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" aria-label="Главная">🏠</button>
-    <button class="nav-item" aria-label="Курсы" (click)="onNavigateToCourses()">📚</button>
-    <button class="nav-item" aria-label="Избранное">⭐</button>
-    <button class="nav-item" aria-label="Профиль" (click)="onNavigateToProfile()">👤</button>
-  </nav>
+  <app-bottom-nav active="home" />
 
   <!-- Статус инициализации -->
   @if (!isInitialized()) {
